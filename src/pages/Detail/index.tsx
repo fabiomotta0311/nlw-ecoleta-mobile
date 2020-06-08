@@ -1,13 +1,54 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Feather as Icon, FontAwesome } from '@expo/vector-icons';
 import { View, StyleSheet, Image, Text, SafeAreaView } from 'react-native';
 import { TouchableOpacity, RectButton } from 'react-native-gesture-handler';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import api from '../../services/api';
+import * as MailComposer from 'expo-mail-composer';
 
+interface Params {
+  point_id: number;
+}
+interface Data{
+  point: {
+    image: string;
+    name: string;
+    email: string;
+    whatsapp: string;
+    city: string;
+    uf: string;
+  };
+  itens: {
+    title: string;
+  }
+}
 const Detail = () => {
+    const [data, setData] = useState<Data[]>({} as Data[]);
+
     const navigation = useNavigation();
+    const route = useRoute();
+
+    const routeParams = route.params as Params;
+
+    useEffect(() => {
+      api.get(`points/${routeParams.point_id}`).then(response => {
+        setData(response.data);
+      })
+    },[]);
+
+
     function handleNavigateBAck(){
         navigation.goBack();
+    }
+
+    function handleComposeMail(){
+      MailComposer.composeAsync({
+        
+      })
+    }
+
+    if(!data.point){
+      return null;
     }
 
     return (
@@ -16,13 +57,15 @@ const Detail = () => {
             <TouchableOpacity onPress={handleNavigateBAck}>
                 <Icon name="arrow-left" size={20} color="#34cb79"/>
             </TouchableOpacity>
-            <Image style="arrow-left" source={{ uri: 'https://images.unsplash.com/photo-1556767576-5ec41e3239ea?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=400&q=60'}}/>
+            <Image style="arrow-left" source={{ uri: data.point.image }}/>
 
-            <Text style={styles.pointName}>Mercadão do João</Text>
-            <Text style={styles.pointItems}>Lâmpadas, Óleo de cozinha</Text>
+            <Text style={styles.pointName}>{ data.point.name }</Text>
+            <Text style={styles.pointItems}>
+              {data.itens.map(item => item.title).join(', ')}
+            </Text>
             <View style={styles.address}>
                 <Text style={styles.addressTitle}>Endereço</Text>
-                <Text style={styles.addressContent}>Rio do Sul, SC</Text>
+                <Text style={styles.addressContent}>{data.point.city}, {data.point.uf}</Text>
             </View>
         </View>
         <View style={styles.footer}>
